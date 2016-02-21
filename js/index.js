@@ -42,6 +42,10 @@
 			mesh.position.set(position.x, position.y, size / 2);
 			scene.add(mesh);
 		}
+		//白球
+		var mesh = ball.draw({number: '', size: size, stripped: false});
+		mesh.position.set(0, 2500, size / 2);
+		scene.add(mesh);
 	}
 
 
