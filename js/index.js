@@ -4,7 +4,12 @@
 
 	var $ = require("jquery"),
 		THREE = require("./three.min.js"),
+		Physijs = require("./physi.js"),
 		ball = require("./ball.js");
+
+	Physijs.scripts.worker = './js/physi_worker.js';
+    Physijs.scripts.ammo = './js/ammo.js';
+
 	THREE.OrbitControls = require("./OrbitControls.js");
 
 	var renderer, scene, camera, controls, cue, balls = [];
@@ -17,7 +22,7 @@
 		renderer = new THREE.WebGLRenderer({ antialias: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		document.body.appendChild(renderer.domElement);
-		scene = new THREE.Scene();
+		scene = new Physijs.Scene;
 		camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000000);
 		camera.position.set(0, -5000, 1500);
 		camera.lookAt(new THREE.Vector3(0, -2500, size / 2));
@@ -64,10 +69,10 @@
 		ironGeometry.rotateX(-Math.PI / 2);
 		var headerGeometry = new THREE.CylinderGeometry(30, 28, 50, 10);
 		headerGeometry.rotateX(-Math.PI / 2);
-		var top = new THREE.Mesh(topGeometry, new THREE.MeshPhongMaterial({map: textureTop}));
-		var bottom = new THREE.Mesh(bottomGeometry, new THREE.MeshPhongMaterial({map: textureBottom}));
-		var iron = new THREE.Mesh(ironGeometry, new THREE.MeshPhongMaterial({map: textureIron}));
-		var header = new THREE.Mesh(headerGeometry, new THREE.MeshPhongMaterial({map: textureHeader}));
+		var top = new Physijs.CylinderMesh(topGeometry, new THREE.MeshPhongMaterial({map: textureTop}));
+		var bottom = new Physijs.CylinderMesh(bottomGeometry, new THREE.MeshPhongMaterial({map: textureBottom}));
+		var iron = new Physijs.CylinderMesh(ironGeometry, new THREE.MeshPhongMaterial({map: textureIron}));
+		var header = new Physijs.CylinderMesh(headerGeometry, new THREE.MeshPhongMaterial({map: textureHeader}));
 		top.position.set(0, 0, -2670);
 		bottom.position.set(0, 0, -1170);
 		iron.position.set(0, 0, -100);
@@ -125,7 +130,7 @@
 		texture.needsUpdate = true;
 		var geometry = new THREE.PlaneGeometry(4000, 8000, 32),
 			material = new THREE.MeshLambertMaterial({color: '#FFFFFF', map: texture}),
-			plane = new THREE.Mesh(geometry, material);
+			plane = new Physijs.PlaneMesh(geometry, material);
 		plane.position.set(0, 0, 0);
 		scene.add(plane);
 		//6条桌边
@@ -135,8 +140,8 @@
 		textureWood.wrapS = THREE.RepeatWrapping;
 		textureWood.WrapT = THREE.RepeatWrapping;
 		textureWood.needsUpdate = true;
-		var	wood = new THREE.Mesh(new THREE.BoxGeometry(500, 3500, 300), new THREE.MeshLambertMaterial({map: textureWood}));
-		var protection = new THREE.Mesh(new THREE.BoxGeometry(50, 3500, 300), material);
+		var	wood = new Physijs.BoxMesh(new THREE.BoxGeometry(500, 3500, 300), new THREE.MeshLambertMaterial({map: textureWood}));
+		var protection = new Physijs.BoxMesh(new THREE.BoxGeometry(50, 3500, 300), material);
 		protection.position.set(270, 0, 0);
 		side[0].add(wood);
 		side[0].add(protection);
