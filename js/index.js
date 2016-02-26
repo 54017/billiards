@@ -7,12 +7,15 @@
 		Physijs = require("./physi.js"),
 		ball = require("./ball.js");
 
-	Physijs.scripts.worker = './js/physi_worker.js';
-    Physijs.scripts.ammo = './js/ammo.js';
+	Physijs.scripts.worker = './js/physijs_worker.js';
+    Physijs.scripts.ammo = './ammo.js';
 
 	THREE.OrbitControls = require("./OrbitControls.js");
 
-	var renderer, scene, camera, controls, cue, balls = [];
+	var renderer, scene, camera, controls, cue, plane,
+		offset = new THREE.Vector3(), selection = null, balls = [],
+		raycaster = new THREE.Raycaster(),
+		mouse = new THREE.Vector2();
 
 	var size = 256,
 		distance = size * 2 / Math.sqrt(2),
@@ -32,15 +35,23 @@
 		addTable();
 		addBalls();
 		addCue();
+		addHelperPlane();
+		window.plan = plane;
+		window.THREE = THREE;
+		window.balls = balls;
+		window.cue = cue;
 		controls = new THREE.OrbitControls(camera, document, cue, balls[15]);
 		controls.target = new THREE.Vector3(0, -2500, 128);
 		render();
-		var axisHelper = new THREE.AxisHelper(10000);
-		scene.add(axisHelper);
+		scene.setGravity(new THREE.Vector3(0, 0, -10000));
+	}
+
+	var addHelperPlane = function() {
+		plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(5000, 5000, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, visible: false }));
+		scene.add(plane);
 	}
 
 	var addCue = function() {
-		cue = new THREE.Object3D();
 		var textureTop = new THREE.TextureLoader().load( "./assets/top.jpg" );
 		textureTop.wrapS = THREE.RepeatWrapping;
 		textureTop.wrapT = THREE.RepeatWrapping;
@@ -62,28 +73,35 @@
 		textureHeader.wrapT = THREE.RepeatWrapping;
 		textureHeader.needsUpdate = true;
 		var topGeometry = new THREE.CylinderGeometry(115, 100, 1000, 50);
-		topGeometry.rotateX(-Math.PI / 2);
 		var bottomGeometry = new THREE.CylinderGeometry(100, 35, 2000, 100);
-		bottomGeometry.rotateX(-Math.PI / 2);
 		var ironGeometry = new THREE.CylinderGeometry(35, 30, 150, 20);
-		ironGeometry.rotateX(-Math.PI / 2);
 		var headerGeometry = new THREE.CylinderGeometry(30, 28, 50, 10);
-		headerGeometry.rotateX(-Math.PI / 2);
-		var top = new Physijs.CylinderMesh(topGeometry, new THREE.MeshPhongMaterial({map: textureTop}));
-		var bottom = new Physijs.CylinderMesh(bottomGeometry, new THREE.MeshPhongMaterial({map: textureBottom}));
-		var iron = new Physijs.CylinderMesh(ironGeometry, new THREE.MeshPhongMaterial({map: textureIron}));
-		var header = new Physijs.CylinderMesh(headerGeometry, new THREE.MeshPhongMaterial({map: textureHeader}));
+		var top = new Physijs.CylinderMesh(topGeometry, Physijs.createMaterial(new THREE.MeshPhongMaterial({map: textureTop}), 0.8, 1), 0);
+		var bottom = new Physijs.CylinderMesh(bottomGeometry, Physijs.createMaterial(new THREE.MeshPhongMaterial({map: textureBottom}), 0.8, 1), 0);
+		var iron = new Physijs.CylinderMesh(ironGeometry, Physijs.createMaterial(new THREE.MeshPhongMaterial({map: textureIron}), 0.8, 0.5), 0);
+		var header = new Physijs.CylinderMesh(headerGeometry, Physijs.createMaterial(new THREE.MeshPhongMaterial({map: textureHeader}), 0.8, 0.7), 0);
+		cue = header;
+		var _vector = new THREE.Vector3();
+		_vector.set( 0, 0, 0 );
 		top.position.set(0, 0, -2670);
+		top.__dirtyPosition = true;
+		top.rotation.x = Math.PI / 2;
+		top.__dirtyRotation = true;
 		bottom.position.set(0, 0, -1170);
+		bottom.rotation.x = -Math.PI / 2;
+		bottom.__dirtyRotation = true;
+		bottom.__dirtyPosition = true;
 		iron.position.set(0, 0, -100);
-		header.position.set(0, 0, 0);
+		iron.__dirtyPosition = true;
+		iron.rotation.x = Math.PI / 2;
+		iron.__dirtyRotation = true;
 		cue.add(top);
 		cue.add(bottom);
-		cue.add(header);
 		cue.add(iron);
 		scene.add(cue);
-		window.Cue = cue;
-		window.THREE = THREE;
+		cue.position.set(0, 2500, 5000);
+		cue.__dirtyPosition = true;
+		top.name = bottom.name = iron.name = cue.name = "cue";
 	}
 
 	var addBalls = function() {
@@ -128,23 +146,22 @@
 		texture.wrapS = THREE.RepeatWrapping;
 		texture.wrapT = THREE.RepeatWrapping;
 		texture.needsUpdate = true;
-		var geometry = new THREE.PlaneGeometry(4000, 8000, 32),
-			material = new THREE.MeshLambertMaterial({color: '#FFFFFF', map: texture}),
-			plane = new Physijs.PlaneMesh(geometry, material);
+		var geometry = new THREE.BoxGeometry(4000, 8000, 1),
+			material = Physijs.createMaterial(new THREE.MeshLambertMaterial({map: texture}), 0.2, 0.8),
+			plane = new Physijs.BoxMesh(geometry, material, 0);
 		plane.position.set(0, 0, 0);
 		scene.add(plane);
 		//6条桌边
 		var side = [];
-		side[0] = new THREE.Object3D();
 		var textureWood = new THREE.TextureLoader().load("./assets/wood.jpg");
 		textureWood.wrapS = THREE.RepeatWrapping;
 		textureWood.WrapT = THREE.RepeatWrapping;
 		textureWood.needsUpdate = true;
-		var	wood = new Physijs.BoxMesh(new THREE.BoxGeometry(500, 3500, 300), new THREE.MeshLambertMaterial({map: textureWood}));
-		var protection = new Physijs.BoxMesh(new THREE.BoxGeometry(50, 3500, 300), material);
+		var	wood = new Physijs.BoxMesh(new THREE.BoxGeometry(500, 3500, 300), Physijs.createMaterial(new THREE.MeshLambertMaterial({map: textureWood}), 0.8, 0), 0);
+		var protection = new Physijs.BoxMesh(new THREE.BoxGeometry(50, 3500, 300), material, 0);
 		protection.position.set(270, 0, 0);
-		side[0].add(wood);
-		side[0].add(protection);
+		wood.add(protection);
+		side[0] = wood;
 		for (var i = 1; i < 6; ++i) {
 			side[i] = side[0].clone();
 		}
@@ -159,15 +176,54 @@
 		side[4].position.set(0, 4100, 150);
 		side[5].position.set(0, -4100, 150);
 		for (var i = 0; i < 6; ++i) {
-			scene.add(side[i]);
+			plane.add(side[i]);
 		}
+		scene.add(plane);
 
 	}
+
+
+	function onMouseMove(event) {	
+		mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+		mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+		raycaster.setFromCamera(mouse, camera);
+		if (selection !== null) {
+			var intersects = raycaster.intersectObject(plane);
+    		selection.object.parent.position.copy(intersects[0].point.sub(offset));
+    		selection.object.parent.__dirtyPosition = true;
+    		selection.object.parent.__dirtyRotation = true;
+		}
+	}
+
+	function onMouseDown(event) {
+		raycaster.setFromCamera(mouse, camera);
+		var intersects = raycaster.intersectObjects(scene.children, true);
+		if (intersects.length > 0 && intersects[0].object.name === 'cue') {
+			selection = intersects[0];
+			controls.enabled = false;
+			plane.position.copy(cue.position);
+			var direction = new THREE.Vector3();
+			direction.copy(cue.position);
+			direction.sub(balls[15].position);
+			direction.cross(new THREE.Vector3(0, 0, 1)).add(cue.position);
+			plane.lookAt(direction);
+			offset.copy(intersects[0].point).sub(plane.position);
+		}
+	}
+
+	function onMouseUp(event) {
+		controls.enabled = true;
+		selection = null;
+	}
+
+
 
 	var render = function() {
 		renderer.render(scene, camera);
 		requestAnimationFrame(render);
 		controls.update();
+		camera.lookAt(balls[15].position);
+		scene.simulate();
 	}
 
 	var bindEvent = function() {
@@ -176,7 +232,10 @@
 			camera.aspect = window.innerWidth / window.innerHeight;
 			camera.updateProjectionMatrix();
 			renderer.setSize(window.innerWidth, window.innerHeight);
-		})
+		});
+		document.addEventListener('mousemove', onMouseMove, false);
+		document.addEventListener('mousedown', onMouseDown, false);
+		document.addEventListener('mouseup', onMouseUp, false);
 	}
 
 

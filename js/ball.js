@@ -2,7 +2,12 @@ module.exports = (function() {
 
 
 	var THREE = require("./three.min.js"),
-		ball = {};
+		ball = {},
+		Physijs = require("./physi.js"),
+		colors = ['#FFFFFF', '#D5A000', '#0B3E6C', '#CA000E', '#150E51', '#E96200', '#0A6029', '5F0A12', '#1E301E', '#EDBE00', '#122F8C', '#DE001C', '#211C53', '#E22B15', '#074420', '#950B1B'];
+
+	Physijs.scripts.worker = './js/physijs_worker.js';
+    Physijs.scripts.ammo = './ammo.js';
 
 	ball.getTexture = function(number, stripped, size) {
 		var canvas = document.createElement('canvas'),
@@ -12,55 +17,7 @@ module.exports = (function() {
 		//在canvas上画出台球的texture
 		ctx.fillStyle = '#FFFFFF';
 		ctx.fillRect(0, 0, size, size);
-		switch(number) {
-			case 1:
-				color = '#D5A000';
-				break;
-			case 2:
-				color = '#0B3E6C';
-				break;
-			case 3:
-				color = '#CA000E';
-				break;
-			case 4:
-				color = '#150E51';
-				break;
-			case 5:
-				color = '#E96200';
-				break;
-			case 6:
-				color = '#0A6029';
-				break;
-			case 7:
-				color = '5F0A12';
-				break;
-			case 8:
-				color = '#1E301E';
-				break;
-			case 9:
-				color = '#EDBE00';
-				break;
-			case 10:
-				color = '#122F8C';
-				break;
-			case 11:
-				color = '#DE001C';
-				break;
-			case 12:
-				color = '#211C53';
-				break;
-			case 13:
-				color = '#E22B15';
-				break;
-			case 14:
-				color = '#074420';
-				break;
-			case 15:
-				color = '#950B1B';
-				break;
-			default:
-				color = '#FFFFFF';
-		}
+		color = colors[number];
 		ctx.fillStyle = color;
 		if (stripped) {
 			ctx.fillRect(0, size / 4, size, size / 2);
@@ -86,9 +43,9 @@ module.exports = (function() {
 		prop.stripped = typeof prop.stripped === 'undefined' ? true : prop.stripped;
 		var texture = new THREE.Texture(this.getTexture(prop.number, prop.stripped, prop.size)),
 			geometry = new THREE.SphereGeometry(prop.size / 2, prop.size / 8, prop.size / 8),
-			material = new THREE.MeshPhongMaterial({map: texture});
+			material = Physijs.createMaterial(new THREE.MeshPhongMaterial({map: texture}), 0.7, 0.3);
 		texture.needsUpdate	= true;
-		var sphere = new THREE.Mesh(geometry, material);
+		var sphere = new Physijs.SphereMesh(geometry, material, 1);
 		return sphere;
 	}
 

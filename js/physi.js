@@ -1,7 +1,5 @@
 var THREE = require('./three.min.js');
 
-module.exports = Physijs;
-
 window.Physijs = (function() {
 	'use strict';
 
@@ -1402,6 +1400,8 @@ window.Physijs = (function() {
 		this.friction_slip = friction_slip !== undefined ? friction_slip : 10.5;
 		this.max_suspension_force = max_suspension_force !== undefined ? max_suspension_force : 6000;
 	};
+
+	module.exports = Physijs;
 
 	return Physijs;
 })();

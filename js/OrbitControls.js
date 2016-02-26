@@ -445,6 +445,20 @@ THREE.OrthographicTrackballControls = function ( object, domElement, cue, ball )
 
 	}
 
+	var updateCue = function() {
+		var projectionVector = new THREE.Vector3(object.position.x, object.position.y, 128);
+		var cueVector = new THREE.Vector3();
+		cueVector.subVectors(projectionVector, ball.position);
+		var k = (projectionVector.y - ball.position.y) / (projectionVector.x - ball.position.x);
+		var d = 400;
+		var offsetX = d / Math.sqrt(Math.pow(projectionVector.x - ball.position.x, 2) + Math.pow(projectionVector.y - ball.position.y, 2)) * (projectionVector.x - ball.position.x);
+		var offsetY = d / Math.sqrt(Math.pow(projectionVector.x - ball.position.x, 2) + Math.pow(projectionVector.y - ball.position.y, 2)) * (projectionVector.y - ball.position.y);
+		cue.position.set(ball.position.x + offsetX, ball.position.y + offsetY, 206);
+		cue.__dirtyPosition = true;
+		cue.lookAt(ball.position);
+		cue.__dirtyRotation = true;
+	}
+
 	function mousemove( event ) {
 
 		if ( _this.enabled === false ) return;
@@ -456,15 +470,8 @@ THREE.OrthographicTrackballControls = function ( object, domElement, cue, ball )
 
 			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
 			//更新球杆位置
-			var projectionVector = new THREE.Vector3(object.position.x, object.position.y, 128);
-			var cueVector = new THREE.Vector3();
-			cueVector.subVectors(projectionVector, ball.position);
-			cue.lookAt(ball.position);
-			var k = (projectionVector.y - ball.position.y) / (projectionVector.x - ball.position.x);
-			var d = 400;
-			var offsetX = d / Math.sqrt(Math.pow(projectionVector.x - ball.position.x, 2) + Math.pow(projectionVector.y - ball.position.y, 2)) * (projectionVector.x - ball.position.x);
-			var offsetY = d / Math.sqrt(Math.pow(projectionVector.x - ball.position.x, 2) + Math.pow(projectionVector.y - ball.position.y, 2)) * (projectionVector.y - ball.position.y);
-			cue.position.set(ball.position.x + offsetX, ball.position.y + offsetY, 206);
+			updateCue();
+			
 
 		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
 
@@ -650,6 +657,7 @@ THREE.OrthographicTrackballControls = function ( object, domElement, cue, ball )
 	window.addEventListener( 'keyup', keyup, false );
 
 	this.handleResize();
+	updateCue();
 
 	// force an update at start
 	this.update();
